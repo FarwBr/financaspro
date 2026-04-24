@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.env
+*.db
+*.sqlite
+relatorio_testes.html
+coverage.xml
+.coverage
+financaspro.tar.gz

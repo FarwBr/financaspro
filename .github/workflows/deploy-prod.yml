@@ -1,0 +1,55 @@
+name: CD — Deploy Produção
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-prod:
+    name: 🚀 Deploy Produção
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências e buildar imagem
+        run: |
+          pip install -r requirements.txt
+          docker build -t financaspro:${{ github.sha }} .
+          docker save financaspro:${{ github.sha }} | gzip > financaspro.tar.gz
+
+      - name: Enviar imagem para VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_KEY }}
+          source:   "financaspro.tar.gz,docker-compose.prod.yml"
+          target:   "/home/univates/financaspro"
+
+      - name: Deploy no container Produção
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/univates/financaspro
+
+            echo "Carregando imagem Docker..."
+            docker load < financaspro.tar.gz
+
+            echo "Subindo container produção..."
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            IMAGE_TAG=${{ github.sha }} \
+            DOCKER_IMAGE=financaspro \
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            echo "Deploy produção concluído!"
+            docker ps | grep prod

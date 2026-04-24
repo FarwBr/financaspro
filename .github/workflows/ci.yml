@@ -1,0 +1,161 @@
+name: CI — Testes, Qualidade e Deploy Homolog
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  # ── JOB 1: Testes automatizados ────────────────────────────────────
+  testes:
+    name: 🧪 Testes Automatizados
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB:       financas_test
+          POSTGRES_USER:     financas
+          POSTGRES_PASSWORD: financas123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U financas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt pytest pytest-html pytest-cov
+
+      - name: Rodar 20 testes + cobertura
+        env:
+          DB_HOST:     localhost
+          DB_PORT:     5432
+          DB_NAME:     financas_test
+          DB_USER:     financas
+          DB_PASSWORD: financas123
+        run: |
+          pytest test_app.py -v \
+            --html=relatorio_testes.html \
+            --self-contained-html \
+            --cov=app \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing
+
+      - name: Upload relatório de testes
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relatorio-testes
+          path: relatorio_testes.html
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage.xml
+
+  # ── JOB 2: Análise de qualidade (SonarCloud) ────────────────────────
+  qualidade:
+    name: 🔍 SonarCloud
+    runs-on: ubuntu-latest
+    needs: testes
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # necessário para análise completa do Sonar
+
+      - name: Download coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+
+  # ── JOB 3: Build da imagem Docker ───────────────────────────────────
+  build:
+    name: 🐳 Build Docker
+    runs-on: ubuntu-latest
+    needs: [testes, qualidade]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build imagem
+        run: |
+          docker build -t financaspro:${{ github.sha }} .
+          docker save financaspro:${{ github.sha }} | gzip > financaspro.tar.gz
+
+      - name: Upload imagem
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: financaspro.tar.gz
+
+  # ── JOB 4: Deploy Homolog (só na branch develop) ────────────────────
+  deploy-homolog:
+    name: 🚀 Deploy Homolog
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download imagem
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+
+      - name: Enviar imagem para VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_KEY }}
+          source:   "financaspro.tar.gz,docker-compose.homolog.yml"
+          target:   "/home/univates/financaspro"
+
+      - name: Deploy no container Homolog
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key:      ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/univates/financaspro
+
+            echo "Carregando imagem Docker..."
+            docker load < financaspro.tar.gz
+
+            echo "Subindo container homolog..."
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            IMAGE_TAG=${{ github.sha }} \
+            DOCKER_IMAGE=financaspro \
+            docker compose -f docker-compose.homolog.yml up -d --remove-orphans
+
+            echo "Deploy homolog concluído!"
+            docker ps | grep homolog
