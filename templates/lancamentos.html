@@ -151,7 +151,7 @@ tbody td{padding:13px 18px;font-size:.9rem;vertical-align:middle}
           <td style="color:var(--muted)">{{ l.id }}</td>
           <td><strong>{{ l.descricao }}</strong></td>
           <td style="color:var(--muted);font-size:.85rem">
-            {% set p = l.data_lancamento.split('-') %}{{ p[2] }}/{{ p[1] }}/{{ p[0] }}
+            {{ l.data_lancamento.strftime('%d/%m/%Y') }}
           </td>
           <td>
             {% if l.tipo_lancamento=='R' %}<span class="badge badge-r">↑ Receita</span>
