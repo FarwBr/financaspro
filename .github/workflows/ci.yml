@@ -122,40 +122,16 @@ jobs:
     if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download imagem
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-
-      - name: Enviar imagem para VM
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host:     ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key:      ${{ secrets.SSH_KEY }}
-          source:   "financaspro.tar.gz,docker-compose.homolog.yml"
-          target:   "/home/univates/financaspro"
-
-      - name: Deploy no container Homolog
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key:      ${{ secrets.SSH_KEY }}
+          port:     22
           script: |
             cd /home/univates/financaspro
-
-            echo "Carregando imagem Docker..."
-            docker load < financaspro.tar.gz
-
-            echo "Subindo container homolog..."
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            IMAGE_TAG=${{ github.sha }} \
-            DOCKER_IMAGE=financaspro \
-            docker compose -f docker-compose.homolog.yml up -d --remove-orphans
-
+            git pull origin develop
+            sudo docker compose build
+            sudo docker compose up -d
             echo "Deploy homolog concluído!"
-            docker ps | grep homolog
