@@ -122,16 +122,11 @@ jobs:
     if: github.ref == 'refs/heads/develop'
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host:     ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key:      ${{ secrets.SSH_KEY }}
-          port:     22
-          script: |
-            cd /home/univates/financaspro
-            git pull origin develop
-            sudo docker compose build
-            sudo docker compose up -d
-            echo "Deploy homolog concluído!"
+      - name: Deploy Homolog
+        run: |
+          cd /home/univates/financaspro
+          git pull origin develop
+          sudo docker compose build
+          sudo docker compose up -d
+          echo "Deploy homolog concluído!"
+          sudo docker ps | grep financas
