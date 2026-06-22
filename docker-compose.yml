@@ -16,8 +16,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
   app_prod:
-    image: financaspro:latest
+    build: .
     container_name: financas_app_prod
     restart: always
     ports:
@@ -36,6 +37,7 @@ services:
     depends_on:
       postgres_prod:
         condition: service_healthy
+
   postgres_homolog:
     image: postgres:16-alpine
     container_name: financas_postgres_homolog
@@ -53,8 +55,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
   app_homolog:
-    image: financaspro:latest
+    build: .
     container_name: financas_app_homolog
     restart: unless-stopped
     ports:
@@ -73,11 +76,13 @@ services:
     depends_on:
       postgres_homolog:
         condition: service_healthy
+
 networks:
   financas_prod_net:
     name: financas_prod_net
   financas_homolog_net:
     name: financas_homolog_net
+
 volumes:
   postgres_prod_data:
   postgres_homolog_data:
