@@ -294,6 +294,10 @@ def excluir_lancamento(lid):
 def health():
     return {'status': 'ok', 'env': os.environ.get('APP_ENV', 'prod')}, 200
 
+def calcular_saldo(receitas, despesas):
+    resultado = receitas - despesas  # variável nunca retornada nem usada
+    return 0
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
