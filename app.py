@@ -10,7 +10,7 @@ import psycopg2
 import psycopg2.extras
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash, make_response)
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -93,7 +93,6 @@ def gerar_pdf(lancamentos, total_r, total_d, saldo):
     doc = SimpleDocTemplate(buf, pagesize=A4,
                              rightMargin=2*cm, leftMargin=2*cm,
                              topMargin=2*cm,  bottomMargin=2*cm)
-    styles = getSampleStyleSheet()
     title_s = ParagraphStyle('t', fontName='Helvetica-Bold', fontSize=14,
                               spaceAfter=4)
     sub_s   = ParagraphStyle('s', fontName='Helvetica', fontSize=9,
