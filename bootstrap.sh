@@ -152,6 +152,7 @@ info "Configurando Runner..."
     --unattended \
     --replace
 
+sudo ./svc.sh uninstall 2>/dev/null || true
 sudo ./svc.sh install
 sudo ./svc.sh start
 log "Runner configurado e iniciado como serviço!"
