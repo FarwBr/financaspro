@@ -17,6 +17,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 
+DB_PASSWORD = "financas123"
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'financas_secret_key_2024')
 
@@ -294,9 +296,9 @@ def excluir_lancamento(lid):
 def health():
     return {'status': 'ok', 'env': os.environ.get('APP_ENV', 'prod')}, 200
 
-def calcular_saldo(receitas, despesas):
-    resultado = receitas - despesas  # variável nunca retornada nem usada
-    return 0
+#def calcular_saldo(receitas, despesas):
+#    resultado = receitas - despesas  # variável nunca retornada nem usada
+#    return 0
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
