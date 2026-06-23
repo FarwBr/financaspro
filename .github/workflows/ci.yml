@@ -124,9 +124,9 @@ jobs:
     steps:
       - name: Deploy Homolog
 	run: |
-  	cd /home/univates/financaspro
-  	git pull origin develop
-  	sudo docker compose build app_homolog
-  	sudo docker compose up -d postgres_homolog app_homolog
-  	echo "Deploy homolog concluído!"
-  	sudo docker ps | grep financas
+  	  cd /home/univates/financaspro
+  	  git pull origin develop
+  	  sudo docker compose build app_homolog
+  	  sudo docker compose up -d postgres_homolog app_homolog
+  	  echo "Deploy homolog concluído!"
+  	  sudo docker ps | grep financas
