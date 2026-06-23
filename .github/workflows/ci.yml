@@ -37,7 +37,12 @@ jobs:
           cache: pip
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt pytest pytest-html pytest-cov
+        run: pip install -r requirements.txt pytest pytest-html pytest-cov flake8
+
+      - name: Analise de qualidade (flake8)
+        run: |
+          flake8 app.py --max-line-length=120 --select=F841,F401,E999 --format=default
+          echo "Qualidade de codigo aprovada!"
 
       - name: Rodar 20 testes + cobertura
         env:
