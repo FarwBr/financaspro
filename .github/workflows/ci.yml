@@ -7,7 +7,6 @@ on:
     branches: [develop, main]
 
 jobs:
-  # ── JOB 1: Testes automatizados ────────────────────────────────────
   testes:
     name: 🧪 Testes Automatizados
     runs-on: ubuntu-latest
@@ -37,7 +36,7 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - name: Instalar dependências
+      - name: Instalar dependencias
         run: pip install -r requirements.txt pytest pytest-html pytest-cov
 
       - name: Rodar 20 testes + cobertura
@@ -55,7 +54,7 @@ jobs:
             --cov-report=xml:coverage.xml \
             --cov-report=term-missing
 
-      - name: Upload relatório de testes
+      - name: Upload relatorio de testes
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -69,7 +68,6 @@ jobs:
           name: coverage
           path: coverage.xml
 
-  # ── JOB 2: Análise de qualidade (SonarCloud) ────────────────────────
   qualidade:
     name: 🔍 SonarCloud
     runs-on: ubuntu-latest
@@ -79,7 +77,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # necessário para análise completa do Sonar
+          fetch-depth: 0
 
       - name: Download coverage
         uses: actions/download-artifact@v4
@@ -92,7 +90,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
 
-  # ── JOB 3: Build da imagem Docker ───────────────────────────────────
   build:
     name: 🐳 Build Docker
     runs-on: ubuntu-latest
@@ -114,7 +111,6 @@ jobs:
           name: docker-image
           path: financaspro.tar.gz
 
-  # ── JOB 4: Deploy Homolog (só na branch develop) ────────────────────
   deploy-homolog:
     name: 🚀 Deploy Homolog
     runs-on: self-hosted
@@ -123,10 +119,10 @@ jobs:
 
     steps:
       - name: Deploy Homolog
-	run: |
-  	  cd /home/univates/financaspro
-  	  git pull origin develop
-  	  sudo docker compose build app_homolog
-  	  sudo docker compose up -d postgres_homolog app_homolog
-  	  echo "Deploy homolog concluído!"
-  	  sudo docker ps | grep financas
+        run: |
+          cd /home/univates/financaspro
+          git pull origin develop
+          sudo docker compose build app_homolog
+          sudo docker compose up -d postgres_homolog app_homolog
+          echo "Deploy homolog concluido!"
+          sudo docker ps | grep financas
