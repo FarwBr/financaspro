@@ -17,7 +17,6 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import  ParagraphStyle
 from reportlab.lib.units import cm
 
-DB_PASSWORD = "financas123"
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'financas_secret_key_2024')
